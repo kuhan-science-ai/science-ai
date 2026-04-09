@@ -60,6 +60,17 @@
           <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
           <form id="chatForm" class="chat-form">
             <textarea id="questionInput" rows="4" placeholder="Ask a deeper chemistry question. Example: Explain SN1 vs SN2 with energy profiles and solvent effects."></textarea>
+            <div class="image-tools">
+              <input id="cameraInput" class="sr-only" type="file" accept="image/*" capture="environment" />
+              <input id="galleryInput" class="sr-only" type="file" accept="image/*" />
+              <button type="button" id="cameraBtn" class="ghost-btn">Use camera</button>
+              <button type="button" id="galleryBtn" class="ghost-btn">Upload image</button>
+              <button type="button" id="clearImageBtn" class="ghost-btn" hidden>Remove image</button>
+            </div>
+            <div id="imagePreviewCard" class="image-preview-card" hidden>
+              <img id="imagePreview" class="image-preview" alt="Selected question image preview" />
+              <p id="imagePreviewLabel" class="microcopy">Image attached.</p>
+            </div>
             <div class="chat-actions">
               <button type="submit" class="primary-btn" id="askButton">Ask Chemistry AI</button>
               <button type="button" id="clearChatBtn" class="ghost-btn">Clear chat</button>

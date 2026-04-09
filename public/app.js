@@ -40,6 +40,14 @@ const dom = {
   askButton: document.getElementById("askButton"),
   chatForm: document.getElementById("chatForm"),
   questionInput: document.getElementById("questionInput"),
+  cameraInput: document.getElementById("cameraInput"),
+  galleryInput: document.getElementById("galleryInput"),
+  cameraBtn: document.getElementById("cameraBtn"),
+  galleryBtn: document.getElementById("galleryBtn"),
+  clearImageBtn: document.getElementById("clearImageBtn"),
+  imagePreviewCard: document.getElementById("imagePreviewCard"),
+  imagePreview: document.getElementById("imagePreview"),
+  imagePreviewLabel: document.getElementById("imagePreviewLabel"),
   chatMessages: document.getElementById("chatMessages"),
   clearChatBtn: document.getElementById("clearChatBtn"),
   paperSearchForm: document.getElementById("paperSearchForm"),
@@ -68,6 +76,7 @@ const dom = {
 
 let currentSubject = "physics";
 let aiBusy = false;
+let selectedImage = null;
 
 init();
 
@@ -92,6 +101,21 @@ function attachEvents() {
   }
   if (dom.chatForm) {
     dom.chatForm.addEventListener("submit", handleQuestionSubmit);
+  }
+  if (dom.cameraBtn) {
+    dom.cameraBtn.addEventListener("click", () => dom.cameraInput?.click());
+  }
+  if (dom.galleryBtn) {
+    dom.galleryBtn.addEventListener("click", () => dom.galleryInput?.click());
+  }
+  if (dom.cameraInput) {
+    dom.cameraInput.addEventListener("change", handleImageSelection);
+  }
+  if (dom.galleryInput) {
+    dom.galleryInput.addEventListener("change", handleImageSelection);
+  }
+  if (dom.clearImageBtn) {
+    dom.clearImageBtn.addEventListener("click", clearSelectedImage);
   }
   if (dom.clearChatBtn) {
     dom.clearChatBtn.addEventListener("click", clearCurrentChat);
@@ -223,7 +247,7 @@ function renderMessage(author, text, autoScroll = true) {
   }
 }
 
-async function getSubjectAnswer(question) {
+async function getSubjectAnswer(question, imagePayload) {
   const history = getCurrentChat()
     .slice(-10)
     .map((entry) => ({
@@ -239,6 +263,7 @@ async function getSubjectAnswer(question) {
     body: JSON.stringify({
       subject: currentSubject,
       question,
+      image: imagePayload,
       history,
     }),
   });
@@ -254,22 +279,28 @@ async function getSubjectAnswer(question) {
 async function handleQuestionSubmit(event) {
   event.preventDefault();
   const question = dom.questionInput.value.trim();
-  if (!question || aiBusy) {
+  if ((!question && !selectedImage) || aiBusy) {
     return;
   }
 
   const viewportState = captureQuestionViewport();
   setAiBusy(true);
   const chat = getCurrentChat();
-  chat.push({ author: "user", text: question });
+  const userText = buildUserQuestionText(question, selectedImage);
+  const imagePayload = selectedImage ? {
+    mimeType: selectedImage.mimeType,
+    base64: selectedImage.base64,
+    fileName: selectedImage.fileName,
+  } : null;
+  chat.push({ author: "user", text: userText });
   saveCurrentChat(chat);
-  renderMessage("user", question, true);
+  renderMessage("user", userText, true);
   scrollChatToBottom();
   restoreQuestionViewport(viewportState);
   dom.questionInput.value = "";
 
   try {
-    const answer = await getSubjectAnswer(question);
+    const answer = await getSubjectAnswer(question, imagePayload);
     await revealAiAnswer(answer, chat);
   } catch (error) {
     const errorText = error instanceof Error
@@ -286,6 +317,7 @@ async function handleQuestionSubmit(event) {
   scrollChatToBottom();
   restoreQuestionViewport(viewportState);
   setAiBusy(false);
+  clearSelectedImage();
   focusQuestionInput();
 }
 
@@ -293,6 +325,7 @@ function clearCurrentChat() {
   saveCurrentChat([{ author: "ai", text: subjectMeta[currentSubject].greeting }]);
   renderCurrentChat();
   scrollChatToBottom();
+  clearSelectedImage();
 }
 
 async function checkServerHealth() {
@@ -652,6 +685,94 @@ function focusQuestionInput() {
   dom.questionInput.focus({ preventScroll: true });
   const end = dom.questionInput.value.length;
   dom.questionInput.setSelectionRange(end, end);
+}
+
+function buildUserQuestionText(question, imagePayload) {
+  if (question && imagePayload) {
+    return `${question}\n\n[Image attached: ${imagePayload.fileName}]`;
+  }
+  if (imagePayload) {
+    return `[Image attached: ${imagePayload.fileName}]`;
+  }
+  return question;
+}
+
+async function handleImageSelection(event) {
+  const file = event.target?.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    if (dom.aiStatus) {
+      dom.aiStatus.textContent = "Please choose an image file.";
+    }
+    return;
+  }
+
+  const maxBytes = 6 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    if (dom.aiStatus) {
+      dom.aiStatus.textContent = "Please choose an image smaller than 6 MB.";
+    }
+    resetImageInputs();
+    return;
+  }
+
+  const dataUrl = await readFileAsDataUrl(file);
+  const base64 = dataUrl.split(",")[1] || "";
+  selectedImage = {
+    fileName: file.name || "question-image",
+    mimeType: file.type,
+    base64,
+    previewUrl: dataUrl,
+  };
+
+  renderSelectedImage();
+  resetImageInputs();
+}
+
+function renderSelectedImage() {
+  if (!dom.imagePreviewCard || !dom.imagePreview || !dom.imagePreviewLabel || !dom.clearImageBtn) {
+    return;
+  }
+
+  if (!selectedImage) {
+    dom.imagePreviewCard.hidden = true;
+    dom.clearImageBtn.hidden = true;
+    dom.imagePreview.removeAttribute("src");
+    dom.imagePreviewLabel.textContent = "Image attached.";
+    return;
+  }
+
+  dom.imagePreviewCard.hidden = false;
+  dom.clearImageBtn.hidden = false;
+  dom.imagePreview.src = selectedImage.previewUrl;
+  dom.imagePreviewLabel.textContent = `${selectedImage.fileName} attached. If the AI says it is blurred, upload a clearer image.`;
+}
+
+function clearSelectedImage() {
+  selectedImage = null;
+  renderSelectedImage();
+  resetImageInputs();
+}
+
+function resetImageInputs() {
+  if (dom.cameraInput) {
+    dom.cameraInput.value = "";
+  }
+  if (dom.galleryInput) {
+    dom.galleryInput.value = "";
+  }
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read the selected image."));
+    reader.readAsDataURL(file);
+  });
 }
 
 function scrollChatToBottom() {

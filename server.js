@@ -11,7 +11,7 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const aiProvider = (process.env.AI_PROVIDER || "ollama").toLowerCase();
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "12mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/health", (_req, res) => {
@@ -29,15 +29,16 @@ app.post("/api/chat", async (req, res) => {
     const question = typeof req.body?.question === "string" ? req.body.question.trim() : "";
     const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().toLowerCase() : "physics";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
-    if (!question) {
-      res.status(400).json({ error: "Question is required." });
+    const image = isValidImagePayload(req.body?.image) ? req.body.image : null;
+    if (!question && !image) {
+      res.status(400).json({ error: "A question or image is required." });
       return;
     }
 
     const answer = aiProvider === "openai"
       ? await askOpenAI(question, subject, history)
       : aiProvider === "gemini"
-        ? await askGemini(question, subject, history)
+        ? await askGemini(question, subject, history, image)
         : await askOllama(question, subject, history);
 
     res.json({ answer });
@@ -179,7 +180,7 @@ async function askOllama(question, subject, history) {
   return answer.trim();
 }
 
-async function askGemini(question, subject, history) {
+async function askGemini(question, subject, history, image) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY in your .env file.");
@@ -196,9 +197,9 @@ async function askGemini(question, subject, history) {
       },
       body: JSON.stringify({
         systemInstruction: {
-          parts: [{ text: buildSubjectInstructions(subject) }],
+          parts: [{ text: buildSubjectInstructions(subject) + " If the user sends an image and it is blurry, cropped, unreadable, too dark, or too low-quality to answer confidently, do not guess. Clearly ask the user to send a clearer image again." }],
         },
-        contents: buildGeminiContents(history, question),
+        contents: buildGeminiContents(history, question, image),
         generationConfig: {
           temperature: 0.4,
         },
@@ -268,19 +269,47 @@ function buildOllamaHistory(history, question) {
   return messages;
 }
 
-function buildGeminiContents(history, question) {
+function buildGeminiContents(history, question, image) {
   const safeHistory = normalizeHistory(history);
   const contents = safeHistory.map((item) => ({
     role: item.role === "assistant" ? "model" : "user",
     parts: [{ text: item.content }],
   }));
 
+  const currentParts = [];
+  if (question) {
+    currentParts.push({ text: question });
+  }
+  if (image) {
+    currentParts.push({
+      inline_data: {
+        mime_type: image.mimeType,
+        data: image.base64,
+      },
+    });
+    if (!question) {
+      currentParts.unshift({
+        text: `Please inspect this ${subject} image carefully and answer in a student-friendly way. If the image is too blurry or unreadable, ask for a clearer image.`,
+      });
+    }
+  }
+
   contents.push({
     role: "user",
-    parts: [{ text: question }],
+    parts: currentParts,
   });
 
   return contents;
+}
+
+function isValidImagePayload(image) {
+  return Boolean(
+    image
+      && typeof image.mimeType === "string"
+      && image.mimeType.startsWith("image/")
+      && typeof image.base64 === "string"
+      && image.base64.length > 0
+  );
 }
 
 function normalizeHistory(history) {
