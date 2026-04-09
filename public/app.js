@@ -45,6 +45,13 @@ const dom = {
   cameraBtn: document.getElementById("cameraBtn"),
   galleryBtn: document.getElementById("galleryBtn"),
   clearImageBtn: document.getElementById("clearImageBtn"),
+  selectedImagePanel: document.getElementById("selectedImagePanel"),
+  selectedImagePreview: document.getElementById("selectedImagePreview"),
+  selectedImageName: document.getElementById("selectedImageName"),
+  selectedImageMeta: document.getElementById("selectedImageMeta"),
+  previewImageBtn: document.getElementById("previewImageBtn"),
+  replaceImageBtn: document.getElementById("replaceImageBtn"),
+  removeImagePreviewBtn: document.getElementById("removeImagePreviewBtn"),
   chatMessages: document.getElementById("chatMessages"),
   clearChatBtn: document.getElementById("clearChatBtn"),
   paperSearchForm: document.getElementById("paperSearchForm"),
@@ -113,6 +120,19 @@ function attachEvents() {
   }
   if (dom.clearImageBtn) {
     dom.clearImageBtn.addEventListener("click", clearSelectedImage);
+  }
+  if (dom.previewImageBtn) {
+    dom.previewImageBtn.addEventListener("click", () => {
+      if (selectedImage) {
+        openImageModal(selectedImage);
+      }
+    });
+  }
+  if (dom.replaceImageBtn) {
+    dom.replaceImageBtn.addEventListener("click", () => dom.galleryInput?.click());
+  }
+  if (dom.removeImagePreviewBtn) {
+    dom.removeImagePreviewBtn.addEventListener("click", clearSelectedImage);
   }
   if (dom.clearChatBtn) {
     dom.clearChatBtn.addEventListener("click", clearCurrentChat);
@@ -728,6 +748,7 @@ async function handleImageSelection(event) {
   selectedImage = {
     fileName: file.name || "question-image",
     mimeType: file.type,
+    size: file.size,
     base64,
     previewUrl: dataUrl,
   };
@@ -737,12 +758,16 @@ async function handleImageSelection(event) {
 }
 
 function renderSelectedImage() {
-  if (!dom.clearImageBtn) {
+  if (!dom.clearImageBtn || !dom.selectedImagePanel || !dom.selectedImagePreview || !dom.selectedImageName || !dom.selectedImageMeta) {
     return;
   }
 
   if (!selectedImage) {
     dom.clearImageBtn.hidden = true;
+    dom.selectedImagePanel.hidden = true;
+    dom.selectedImagePreview.removeAttribute("src");
+    dom.selectedImageName.textContent = "Selected image";
+    dom.selectedImageMeta.textContent = "Preview the image before sending it to the AI.";
     if (dom.aiStatus) {
       dom.aiStatus.textContent = "AI ready for questions.";
     }
@@ -750,6 +775,11 @@ function renderSelectedImage() {
   }
 
   dom.clearImageBtn.hidden = false;
+  dom.selectedImagePanel.hidden = false;
+  dom.selectedImagePreview.src = selectedImage.previewUrl;
+  dom.selectedImagePreview.alt = selectedImage.fileName || "Selected image preview";
+  dom.selectedImageName.textContent = selectedImage.fileName || "Selected image";
+  dom.selectedImageMeta.textContent = buildSelectedImageMeta(selectedImage);
   if (dom.aiStatus) {
     dom.aiStatus.textContent = `${selectedImage.fileName} attached. Ask your question or submit the image now.`;
   }
@@ -777,6 +807,16 @@ function readFileAsDataUrl(file) {
     reader.onerror = () => reject(new Error("Could not read the selected image."));
     reader.readAsDataURL(file);
   });
+}
+
+function buildSelectedImageMeta(image) {
+  const sizeLabel = typeof image.size === "number"
+    ? `${(image.size / (1024 * 1024)).toFixed(image.size >= 1024 * 1024 ? 1 : 2)} MB`
+    : null;
+  const typeLabel = image.mimeType ? image.mimeType.replace("image/", "").toUpperCase() : null;
+  return [typeLabel, sizeLabel, "Check clarity before sending"]
+    .filter(Boolean)
+    .join(" • ");
 }
 
 function scrollChatToBottom() {

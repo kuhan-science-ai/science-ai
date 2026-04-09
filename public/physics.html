@@ -83,6 +83,21 @@
               </button>
               <button type="button" id="clearImageBtn" class="ghost-btn" hidden>Remove image</button>
             </div>
+            <section id="selectedImagePanel" class="selected-image-panel" hidden aria-live="polite">
+              <div class="selected-image-frame">
+                <img id="selectedImagePreview" class="selected-image-preview" alt="Selected image preview" />
+              </div>
+              <div class="selected-image-copy">
+                <p class="selected-image-eyebrow">Ready to send</p>
+                <h4 id="selectedImageName">Selected image</h4>
+                <p id="selectedImageMeta" class="selected-image-meta">Preview the image before sending it to the AI.</p>
+                <div class="selected-image-actions">
+                  <button type="button" id="previewImageBtn" class="ghost-btn">Preview larger</button>
+                  <button type="button" id="replaceImageBtn" class="ghost-btn">Replace image</button>
+                  <button type="button" id="removeImagePreviewBtn" class="ghost-btn">Remove</button>
+                </div>
+              </div>
+            </section>
             <div class="chat-actions">
               <button type="submit" class="primary-btn" id="askButton">Ask Physics AI</button>
               <button type="button" id="clearChatBtn" class="ghost-btn">Clear chat</button>
