@@ -63,8 +63,20 @@
             <div class="image-tools">
               <input id="cameraInput" class="sr-only" type="file" accept="image/*" capture="environment" />
               <input id="galleryInput" class="sr-only" type="file" accept="image/*" />
-              <button type="button" id="cameraBtn" class="ghost-btn">Use camera</button>
-              <button type="button" id="galleryBtn" class="ghost-btn">Upload image</button>
+              <button type="button" id="cameraBtn" class="media-btn media-btn-camera">
+                <span class="media-btn-icon" aria-hidden="true"></span>
+                <span class="media-btn-copy">
+                  <strong>Use Camera</strong>
+                  <span>Snap a question</span>
+                </span>
+              </button>
+              <button type="button" id="galleryBtn" class="media-btn media-btn-gallery">
+                <span class="media-btn-icon" aria-hidden="true"></span>
+                <span class="media-btn-copy">
+                  <strong>Upload Image</strong>
+                  <span>Choose from gallery</span>
+                </span>
+              </button>
               <button type="button" id="clearImageBtn" class="ghost-btn" hidden>Remove image</button>
             </div>
             <div id="imagePreviewCard" class="image-preview-card" hidden>
