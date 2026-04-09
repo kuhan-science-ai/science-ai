@@ -49,6 +49,8 @@ const dom = {
   selectedImagePreview: document.getElementById("selectedImagePreview"),
   selectedImageName: document.getElementById("selectedImageName"),
   selectedImageMeta: document.getElementById("selectedImageMeta"),
+  previewZoomOutBtn: document.getElementById("previewZoomOutBtn"),
+  previewZoomInBtn: document.getElementById("previewZoomInBtn"),
   previewImageBtn: document.getElementById("previewImageBtn"),
   replaceImageBtn: document.getElementById("replaceImageBtn"),
   removeImagePreviewBtn: document.getElementById("removeImagePreviewBtn"),
@@ -81,6 +83,8 @@ const dom = {
 let currentSubject = "physics";
 let aiBusy = false;
 let selectedImage = null;
+let selectedImageZoom = 1;
+let modalImageZoom = 1;
 
 init();
 
@@ -127,6 +131,12 @@ function attachEvents() {
         openImageModal(selectedImage);
       }
     });
+  }
+  if (dom.previewZoomOutBtn) {
+    dom.previewZoomOutBtn.addEventListener("click", () => adjustSelectedImageZoom(-0.2));
+  }
+  if (dom.previewZoomInBtn) {
+    dom.previewZoomInBtn.addEventListener("click", () => adjustSelectedImageZoom(0.2));
   }
   if (dom.replaceImageBtn) {
     dom.replaceImageBtn.addEventListener("click", () => dom.galleryInput?.click());
@@ -752,6 +762,7 @@ async function handleImageSelection(event) {
     base64,
     previewUrl: dataUrl,
   };
+  selectedImageZoom = 1;
 
   renderSelectedImage();
   resetImageInputs();
@@ -766,6 +777,7 @@ function renderSelectedImage() {
     dom.clearImageBtn.hidden = true;
     dom.selectedImagePanel.hidden = true;
     dom.selectedImagePreview.style.backgroundImage = "";
+    dom.selectedImagePreview.style.backgroundSize = "cover";
     dom.selectedImagePreview.setAttribute("aria-label", "Selected image preview");
     dom.selectedImageName.textContent = "Selected image";
     dom.selectedImageMeta.textContent = "Preview the image before sending it to the AI.";
@@ -781,6 +793,7 @@ function renderSelectedImage() {
   dom.selectedImagePreview.setAttribute("aria-label", selectedImage.fileName || "Selected image preview");
   dom.selectedImageName.textContent = selectedImage.fileName || "Selected image";
   dom.selectedImageMeta.textContent = buildSelectedImageMeta(selectedImage);
+  updateSelectedImageZoom();
   if (dom.aiStatus) {
     dom.aiStatus.textContent = `${selectedImage.fileName} attached. Ask your question or submit the image now.`;
   }
@@ -788,6 +801,7 @@ function renderSelectedImage() {
 
 function clearSelectedImage() {
   selectedImage = null;
+  selectedImageZoom = 1;
   renderSelectedImage();
   resetImageInputs();
 }
@@ -818,6 +832,38 @@ function buildSelectedImageMeta(image) {
   return [typeLabel, sizeLabel, "Check clarity before sending"]
     .filter(Boolean)
     .join(" • ");
+}
+
+function adjustSelectedImageZoom(step) {
+  if (!selectedImage) {
+    return;
+  }
+  selectedImageZoom = clampZoom(selectedImageZoom + step);
+  updateSelectedImageZoom();
+}
+
+function updateSelectedImageZoom() {
+  if (!dom.selectedImagePreview) {
+    return;
+  }
+  dom.selectedImagePreview.style.backgroundSize = `${Math.round(selectedImageZoom * 100)}%`;
+}
+
+function adjustModalImageZoom(step) {
+  modalImageZoom = clampZoom(modalImageZoom + step);
+  updateModalImageZoom();
+}
+
+function updateModalImageZoom() {
+  const modal = ensureImageModal();
+  if (!modal?.preview) {
+    return;
+  }
+  modal.preview.style.transform = `scale(${modalImageZoom})`;
+}
+
+function clampZoom(value) {
+  return Math.min(3, Math.max(0.8, Number(value.toFixed(2))));
 }
 
 function scrollChatToBottom() {
@@ -852,9 +898,11 @@ function openImageModal(image) {
     return;
   }
 
+  modalImageZoom = 1;
   modal.preview.src = image.previewUrl;
   modal.preview.alt = image.fileName || "Attached question image";
   modal.caption.textContent = image.fileName || "Attached image";
+  updateModalImageZoom();
   modal.root.hidden = false;
   document.body.classList.add("modal-open");
 }
@@ -867,6 +915,7 @@ function closeImageModal() {
 
   modal.root.hidden = true;
   modal.preview.removeAttribute("src");
+  modal.preview.style.transform = "scale(1)";
   modal.caption.textContent = "";
   document.body.classList.remove("modal-open");
 }
@@ -888,20 +937,36 @@ function ensureImageModal() {
   root.innerHTML = `
     <div class="image-modal-backdrop" data-close-image-modal="true"></div>
     <div class="image-modal-dialog" role="dialog" aria-modal="true" aria-label="Attached image viewer">
-      <button type="button" class="image-modal-close" data-close-image-modal="true">Close</button>
-      <img id="imageModalPreview" class="image-modal-preview" alt="Attached image preview" />
+      <div class="image-modal-toolbar">
+        <div class="image-modal-zoom">
+          <button type="button" class="image-modal-zoom-btn" id="imageModalZoomOut" aria-label="Zoom out image">-</button>
+          <button type="button" class="image-modal-zoom-btn" id="imageModalZoomIn" aria-label="Zoom in image">+</button>
+        </div>
+        <button type="button" class="image-modal-close" data-close-image-modal="true">Close</button>
+      </div>
+      <div class="image-modal-stage">
+        <img id="imageModalPreview" class="image-modal-preview" alt="Attached image preview" />
+      </div>
       <p id="imageModalCaption" class="image-modal-caption"></p>
     </div>
   `;
 
   const backdrop = root.querySelector(".image-modal-backdrop");
   const closeButton = root.querySelector(".image-modal-close");
+  const zoomOutButton = root.querySelector("#imageModalZoomOut");
+  const zoomInButton = root.querySelector("#imageModalZoomIn");
 
   if (backdrop instanceof HTMLElement) {
     backdrop.addEventListener("click", closeImageModal);
   }
   if (closeButton instanceof HTMLElement) {
     closeButton.addEventListener("click", closeImageModal);
+  }
+  if (zoomOutButton instanceof HTMLElement) {
+    zoomOutButton.addEventListener("click", () => adjustModalImageZoom(-0.2));
+  }
+  if (zoomInButton instanceof HTMLElement) {
+    zoomInButton.addEventListener("click", () => adjustModalImageZoom(0.2));
   }
 
   document.addEventListener("keydown", handleImageModalEscape);

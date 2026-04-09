@@ -443,6 +443,7 @@ textarea {
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  transition: background-size 0.22s ease;
 }
 
 .selected-image-preview::before {
@@ -486,6 +487,13 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.zoom-btn {
+  min-width: 48px;
+  padding-inline: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .sr-only {
@@ -657,6 +665,30 @@ textarea {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
 
+.image-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.image-modal-zoom {
+  display: flex;
+  gap: 10px;
+}
+
+.image-modal-zoom-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .image-modal-close {
   justify-self: end;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -667,13 +699,23 @@ textarea {
   cursor: pointer;
 }
 
-.image-modal-preview {
-  width: 100%;
+.image-modal-stage {
+  display: grid;
+  place-items: center;
+  overflow: auto;
   max-height: 68vh;
-  object-fit: contain;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.18);
+  padding: 12px;
+}
+
+.image-modal-preview {
+  width: 100%;
+  max-height: calc(68vh - 24px);
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.22s ease;
 }
 
 .image-modal-caption {
