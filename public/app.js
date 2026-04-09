@@ -854,7 +854,10 @@ function ensureImageModal() {
 
   root.addEventListener("click", (event) => {
     const target = event.target;
-    if (target instanceof HTMLElement && target.dataset.closeImageModal === "true") {
+    const closeTarget = target instanceof Element
+      ? target.closest("[data-close-image-modal='true']")
+      : null;
+    if (closeTarget) {
       closeImageModal();
     }
   });
