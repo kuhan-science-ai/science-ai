@@ -98,6 +98,7 @@ function init() {
     renderCurrentChat();
     renderNotes();
     renderProgress();
+    jumpToQuestionBoxOnLoad();
   }
 
   checkServerHealth();
@@ -719,6 +720,21 @@ function focusQuestionInput() {
   dom.questionInput.focus({ preventScroll: true });
   const end = dom.questionInput.value.length;
   dom.questionInput.setSelectionRange(end, end);
+}
+
+function jumpToQuestionBoxOnLoad() {
+  if (!dom.questionInput || !subjectLock) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const top = dom.questionInput.getBoundingClientRect().top + window.scrollY - 24;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: "auto",
+    });
+    focusQuestionInput();
+  });
 }
 
 function buildUserQuestionText(question, imagePayload) {
