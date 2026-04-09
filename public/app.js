@@ -263,7 +263,7 @@ async function handleQuestionSubmit(event) {
   const chat = getCurrentChat();
   chat.push({ author: "user", text: question });
   saveCurrentChat(chat);
-  renderCurrentChat();
+  renderMessage("user", question, true);
   scrollChatToBottom();
   restoreQuestionViewport(viewportState);
   dom.questionInput.value = "";
@@ -272,16 +272,17 @@ async function handleQuestionSubmit(event) {
     const answer = await getSubjectAnswer(question);
     await revealAiAnswer(answer, chat);
   } catch (error) {
+    const errorText = error instanceof Error
+      ? error.message
+      : "The AI is unavailable right now. Make sure the local server and model are running.";
     chat.push({
       author: "ai",
-      text: error instanceof Error
-        ? error.message
-        : "The AI is unavailable right now. Make sure the local server and model are running.",
+      text: errorText,
     });
+    renderMessage("ai", errorText, true);
   }
 
   saveCurrentChat(chat);
-  renderCurrentChat();
   scrollChatToBottom();
   restoreQuestionViewport(viewportState);
   setAiBusy(false);
@@ -665,11 +666,7 @@ async function revealAiAnswer(answer, chat) {
   const aiMessage = { author: "ai", text: "" };
   chat.push(aiMessage);
   saveCurrentChat(chat);
-  renderCurrentChat();
-  scrollChatToBottom();
-
-  const aiBodies = dom.chatMessages.querySelectorAll(".message.ai .message-body");
-  const target = aiBodies[aiBodies.length - 1];
+  const target = appendAiPlaceholder();
   if (!target) {
     aiMessage.text = cleanedAnswer;
     return;
@@ -695,6 +692,27 @@ async function revealAiAnswer(answer, chat) {
 
   target.classList.remove("typing-cursor");
   target.innerHTML = formatDisplayHtml(cleanedAnswer);
+}
+
+function appendAiPlaceholder() {
+  if (!dom.chatMessages) {
+    return null;
+  }
+
+  const article = document.createElement("article");
+  article.className = "message ai";
+
+  const heading = document.createElement("h4");
+  heading.textContent = subjectMeta[currentSubject].label;
+
+  const body = document.createElement("p");
+  body.className = "message-body";
+
+  article.append(heading, body);
+  dom.chatMessages.append(article);
+  scrollChatToBottom();
+
+  return body;
 }
 
 function formatDisplayText(text) {
