@@ -800,7 +800,7 @@ function buildChatImagePreview(image) {
 
   const caption = document.createElement("span");
   caption.className = "message-image-note";
-  caption.textContent = image.fileName ? `Open image: ${image.fileName}` : "Open attached image";
+  caption.textContent = image.fileName ? `View image: ${image.fileName}` : "View attached image";
 
   anchor.append(preview, caption);
   return anchor;
