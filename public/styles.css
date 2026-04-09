@@ -367,46 +367,14 @@ textarea {
   flex: 0 0 auto;
   background: linear-gradient(135deg, rgba(255, 211, 122, 0.28), rgba(109, 226, 255, 0.22));
   border: 1px solid rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  color: #f7fbff;
 }
 
-.media-btn-icon::before,
-.media-btn-icon::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-}
-
-.media-btn-camera .media-btn-icon::before {
-  width: 22px;
-  height: 14px;
-  border: 2px solid #f7fbff;
-  border-radius: 4px;
-  top: 2px;
-}
-
-.media-btn-camera .media-btn-icon::after {
-  width: 8px;
-  height: 8px;
-  border: 2px solid #f7fbff;
-  border-radius: 999px;
-}
-
-.media-btn-gallery .media-btn-icon::before {
-  width: 22px;
-  height: 18px;
-  border: 2px solid #f7fbff;
-  border-radius: 4px;
-  top: 0;
-}
-
-.media-btn-gallery .media-btn-icon::after {
-  width: 14px;
-  height: 10px;
-  bottom: 6px;
-  background:
-    linear-gradient(135deg, transparent 45%, #f7fbff 46% 54%, transparent 55%),
-    linear-gradient(45deg, transparent 35%, #f7fbff 36% 64%, transparent 65%);
+.media-btn-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .media-btn-copy {
