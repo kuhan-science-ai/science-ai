@@ -765,7 +765,8 @@ function renderSelectedImage() {
   if (!selectedImage) {
     dom.clearImageBtn.hidden = true;
     dom.selectedImagePanel.hidden = true;
-    dom.selectedImagePreview.removeAttribute("src");
+    dom.selectedImagePreview.style.backgroundImage = "";
+    dom.selectedImagePreview.setAttribute("aria-label", "Selected image preview");
     dom.selectedImageName.textContent = "Selected image";
     dom.selectedImageMeta.textContent = "Preview the image before sending it to the AI.";
     if (dom.aiStatus) {
@@ -776,8 +777,8 @@ function renderSelectedImage() {
 
   dom.clearImageBtn.hidden = false;
   dom.selectedImagePanel.hidden = false;
-  dom.selectedImagePreview.src = selectedImage.previewUrl;
-  dom.selectedImagePreview.alt = selectedImage.fileName || "Selected image preview";
+  dom.selectedImagePreview.style.backgroundImage = `url("${selectedImage.previewUrl}")`;
+  dom.selectedImagePreview.setAttribute("aria-label", selectedImage.fileName || "Selected image preview");
   dom.selectedImageName.textContent = selectedImage.fileName || "Selected image";
   dom.selectedImageMeta.textContent = buildSelectedImageMeta(selectedImage);
   if (dom.aiStatus) {
