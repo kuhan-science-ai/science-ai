@@ -45,9 +45,6 @@ const dom = {
   cameraBtn: document.getElementById("cameraBtn"),
   galleryBtn: document.getElementById("galleryBtn"),
   clearImageBtn: document.getElementById("clearImageBtn"),
-  imagePreviewCard: document.getElementById("imagePreviewCard"),
-  imagePreview: document.getElementById("imagePreview"),
-  imagePreviewLabel: document.getElementById("imagePreviewLabel"),
   chatMessages: document.getElementById("chatMessages"),
   clearChatBtn: document.getElementById("clearChatBtn"),
   paperSearchForm: document.getElementById("paperSearchForm"),
@@ -214,14 +211,14 @@ function renderCurrentChat() {
   const chat = getCurrentChat();
   dom.chatMessages.innerHTML = "";
   for (const entry of chat) {
-    renderMessage(entry.author, entry.text, false);
+    renderMessage(entry.author, entry.text, false, entry.image || null);
   }
   if (keepBottom) {
     scrollChatToBottom();
   }
 }
 
-function renderMessage(author, text, autoScroll = true) {
+function renderMessage(author, text, autoScroll = true, image = null) {
   if (!dom.chatMessages) {
     return;
   }
@@ -241,6 +238,9 @@ function renderMessage(author, text, autoScroll = true) {
   }
 
   article.append(heading, body);
+  if (image?.previewUrl) {
+    article.append(buildChatImagePreview(image));
+  }
   dom.chatMessages.append(article);
   if (autoScroll && keepBottom) {
     scrollChatToBottom();
@@ -292,9 +292,13 @@ async function handleQuestionSubmit(event) {
     base64: selectedImage.base64,
     fileName: selectedImage.fileName,
   } : null;
-  chat.push({ author: "user", text: userText });
+  const chatImage = selectedImage ? {
+    fileName: selectedImage.fileName,
+    previewUrl: selectedImage.previewUrl,
+  } : null;
+  chat.push({ author: "user", text: userText, image: chatImage });
   saveCurrentChat(chat);
-  renderMessage("user", userText, true);
+  renderMessage("user", userText, true, chatImage);
   scrollChatToBottom();
   restoreQuestionViewport(viewportState);
   dom.questionInput.value = "";
@@ -688,11 +692,11 @@ function focusQuestionInput() {
 }
 
 function buildUserQuestionText(question, imagePayload) {
-  if (question && imagePayload) {
-    return `${question}\n\n[Image attached: ${imagePayload.fileName}]`;
+  if (question) {
+    return question;
   }
   if (imagePayload) {
-    return `[Image attached: ${imagePayload.fileName}]`;
+    return "Please analyze this image.";
   }
   return question;
 }
@@ -733,22 +737,22 @@ async function handleImageSelection(event) {
 }
 
 function renderSelectedImage() {
-  if (!dom.imagePreviewCard || !dom.imagePreview || !dom.imagePreviewLabel || !dom.clearImageBtn) {
+  if (!dom.clearImageBtn) {
     return;
   }
 
   if (!selectedImage) {
-    dom.imagePreviewCard.hidden = true;
     dom.clearImageBtn.hidden = true;
-    dom.imagePreview.removeAttribute("src");
-    dom.imagePreviewLabel.textContent = "Image attached.";
+    if (dom.aiStatus) {
+      dom.aiStatus.textContent = "AI ready for questions.";
+    }
     return;
   }
 
-  dom.imagePreviewCard.hidden = false;
   dom.clearImageBtn.hidden = false;
-  dom.imagePreview.src = selectedImage.previewUrl;
-  dom.imagePreviewLabel.textContent = `${selectedImage.fileName} attached. If the AI says it is blurred, upload a clearer image.`;
+  if (dom.aiStatus) {
+    dom.aiStatus.textContent = `${selectedImage.fileName} attached. Ask your question or submit the image now.`;
+  }
 }
 
 function clearSelectedImage() {
@@ -780,6 +784,26 @@ function scrollChatToBottom() {
     return;
   }
   dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+}
+
+function buildChatImagePreview(image) {
+  const anchor = document.createElement("a");
+  anchor.className = "chat-image-link";
+  anchor.href = image.previewUrl;
+  anchor.target = "_blank";
+  anchor.rel = "noreferrer";
+
+  const preview = document.createElement("img");
+  preview.className = "chat-image-preview";
+  preview.src = image.previewUrl;
+  preview.alt = image.fileName || "Attached question image";
+
+  const caption = document.createElement("span");
+  caption.className = "message-image-note";
+  caption.textContent = image.fileName ? `Open image: ${image.fileName}` : "Open attached image";
+
+  anchor.append(preview, caption);
+  return anchor;
 }
 
 async function revealAiAnswer(answer, chat) {
