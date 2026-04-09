@@ -787,11 +787,10 @@ function scrollChatToBottom() {
 }
 
 function buildChatImagePreview(image) {
-  const anchor = document.createElement("a");
+  const anchor = document.createElement("button");
+  anchor.type = "button";
   anchor.className = "chat-image-link";
-  anchor.href = image.previewUrl;
-  anchor.target = "_blank";
-  anchor.rel = "noreferrer";
+  anchor.addEventListener("click", () => openImageModal(image));
 
   const preview = document.createElement("img");
   preview.className = "chat-image-preview";
@@ -804,6 +803,76 @@ function buildChatImagePreview(image) {
 
   anchor.append(preview, caption);
   return anchor;
+}
+
+function openImageModal(image) {
+  const modal = ensureImageModal();
+  if (!modal) {
+    return;
+  }
+
+  modal.preview.src = image.previewUrl;
+  modal.preview.alt = image.fileName || "Attached question image";
+  modal.caption.textContent = image.fileName || "Attached image";
+  modal.root.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeImageModal() {
+  const modal = ensureImageModal();
+  if (!modal) {
+    return;
+  }
+
+  modal.root.hidden = true;
+  modal.preview.removeAttribute("src");
+  document.body.classList.remove("modal-open");
+}
+
+function ensureImageModal() {
+  let root = document.getElementById("imageModal");
+  if (root) {
+    return {
+      root,
+      preview: document.getElementById("imageModalPreview"),
+      caption: document.getElementById("imageModalCaption"),
+    };
+  }
+
+  root = document.createElement("div");
+  root.id = "imageModal";
+  root.className = "image-modal";
+  root.hidden = true;
+  root.innerHTML = `
+    <div class="image-modal-backdrop" data-close-image-modal="true"></div>
+    <div class="image-modal-dialog" role="dialog" aria-modal="true" aria-label="Attached image viewer">
+      <button type="button" class="image-modal-close" data-close-image-modal="true">Close</button>
+      <img id="imageModalPreview" class="image-modal-preview" alt="Attached image preview" />
+      <p id="imageModalCaption" class="image-modal-caption"></p>
+    </div>
+  `;
+
+  root.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.dataset.closeImageModal === "true") {
+      closeImageModal();
+    }
+  });
+
+  document.addEventListener("keydown", handleImageModalEscape);
+  document.body.append(root);
+
+  return {
+    root,
+    preview: document.getElementById("imageModalPreview"),
+    caption: document.getElementById("imageModalCaption"),
+  };
+}
+
+function handleImageModalEscape(event) {
+  if (event.key === "Escape") {
+    closeImageModal();
+  }
 }
 
 async function revealAiAnswer(answer, chat) {
