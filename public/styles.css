@@ -476,6 +476,10 @@ textarea {
   place-items: center;
 }
 
+.image-modal[hidden] {
+  display: none !important;
+}
+
 .image-modal-backdrop {
   position: absolute;
   inset: 0;

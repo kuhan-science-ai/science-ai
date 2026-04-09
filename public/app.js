@@ -826,6 +826,7 @@ function closeImageModal() {
 
   modal.root.hidden = true;
   modal.preview.removeAttribute("src");
+  modal.caption.textContent = "";
   document.body.classList.remove("modal-open");
 }
 
