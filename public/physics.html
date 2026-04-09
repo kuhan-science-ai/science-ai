@@ -1,0 +1,153 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physics AI Website</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body data-subject-lock="physics">
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Physics AI Website</p>
+        <h1>Ask deeper physics questions and build physics research papers in one focused workspace.</h1>
+        <p class="hero-text">
+          This build gives you a dedicated Physics AI, online paper search,
+          editable notes, progress tracking, and draft generation without login.
+        </p>
+      </div>
+
+      <div class="hero-panel glass">
+        <h2>Physics Workspace</h2>
+        <p>Open the workspace directly and start using the AI and research tools.</p>
+        <button id="betaStartBtn" class="primary-btn">Open Workspace</button>
+        <p id="authStatus" class="status-text">Workspace ready</p>
+        <p class="microcopy">
+          No login or verification is required.
+          The AI becomes real when your selected provider in <code>.env</code> is working.
+        </p>
+        <p id="serverStatus" class="microcopy">Checking local server...</p>
+      </div>
+    </header>
+
+    <main id="appContent" class="app-content" aria-hidden="false">
+      <nav class="topbar glass">
+        <div>
+          <p class="eyebrow">Physics Workspace</p>
+          <h2 id="userGreeting">Physics Researcher</h2>
+        </div>
+        <div class="topbar-actions">
+          <button class="ghost-btn" data-view-target="ai">Physics AI</button>
+          <button class="ghost-btn" data-view-target="research">Research Hub</button>
+          <a class="ghost-btn nav-link-btn" href="/">All Sites</a>
+        </div>
+      </nav>
+
+      <section class="workspace-grid">
+        <section id="aiView" class="panel glass active-view">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Assistant</p>
+              <h3 id="subjectTitle">Physics AI</h3>
+            </div>
+            <span class="pill">Dedicated physics reasoning</span>
+          </div>
+          <p id="aiStatus" class="status-text">AI ready for questions.</p>
+          <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+          <form id="chatForm" class="chat-form">
+            <textarea id="questionInput" rows="4" placeholder="Ask a deeper physics question. Example: Derive the photoelectric effect and explain the assumptions."></textarea>
+            <div class="chat-actions">
+              <button type="submit" class="primary-btn" id="askButton">Ask Physics AI</button>
+              <button type="button" id="clearChatBtn" class="ghost-btn">Clear chat</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="researchView" class="panel glass">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Physics Research</p>
+              <h3>Research Hub</h3>
+            </div>
+            <span class="pill">Search papers, save notes, draft content</span>
+          </div>
+
+          <div class="research-layout">
+            <section class="research-block">
+              <h4>Search Research Papers</h4>
+              <form id="paperSearchForm" class="stack-form">
+                <input id="paperQuery" type="text" placeholder="Search a physics topic: black holes, optics, superconductivity..." />
+                <button type="submit" class="primary-btn">Find papers online</button>
+              </form>
+              <div id="paperResults" class="results-list">
+                <p class="empty-state">Search results will appear here.</p>
+              </div>
+            </section>
+
+            <section class="research-block">
+              <h4>Saved Physics Notes</h4>
+              <form id="saveNoteForm" class="stack-form">
+                <input id="noteTitle" type="text" placeholder="Note title" />
+                <textarea id="noteContent" rows="6" placeholder="Store important findings, derivations, formulas, summaries, or quotes here."></textarea>
+                <button type="submit" class="primary-btn">Save note</button>
+              </form>
+              <div class="notes-toolbar">
+                <input id="noteSearchInput" type="text" placeholder="Search saved physics notes..." />
+                <button id="exportNotesBtn" class="ghost-btn" type="button">Export notes</button>
+              </div>
+              <div class="progress-strip">
+                <div class="progress-copy">
+                  <h5>Publishing Progress</h5>
+                  <p id="progressLabel" class="status-text">No milestones saved yet.</p>
+                </div>
+                <div class="progress-bar">
+                  <div id="progressFill" class="progress-fill"></div>
+                </div>
+              </div>
+              <p id="noteCount" class="microcopy">No saved notes yet.</p>
+              <div id="savedNotes" class="results-list">
+                <p class="empty-state">No saved physics notes yet.</p>
+              </div>
+            </section>
+          </div>
+
+          <section class="research-block draft-block">
+            <div class="draft-header">
+              <div>
+                <h4>Physics Paper Draft Builder</h4>
+                <p>Generate a structured draft and track where you are in the publishing pipeline.</p>
+              </div>
+              <div class="draft-actions">
+                <select id="progressStage">
+                  <option value="10">Idea stage</option>
+                  <option value="30">Literature review</option>
+                  <option value="50">Method and calculations</option>
+                  <option value="70">Draft writing</option>
+                  <option value="85">Revision</option>
+                  <option value="100">Ready to submit</option>
+                </select>
+                <button id="saveProgressBtn" class="ghost-btn" type="button">Save progress</button>
+                <button id="buildDraftBtn" class="primary-btn">Create draft</button>
+              </div>
+            </div>
+            <textarea id="paperDraft" rows="14" placeholder="Your generated draft will appear here. You can edit it before exporting."></textarea>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+

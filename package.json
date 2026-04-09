@@ -1,0 +1,17 @@
+{
+  "name": "physics-ai-node",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express-session": "^1.18.1",
+    "express": "^5.1.0",
+    "google-auth-library": "^9.15.1",
+    "openai": "^5.20.0"
+  }
+}
