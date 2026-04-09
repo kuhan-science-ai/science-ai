@@ -852,15 +852,15 @@ function ensureImageModal() {
     </div>
   `;
 
-  root.addEventListener("click", (event) => {
-    const target = event.target;
-    const closeTarget = target instanceof Element
-      ? target.closest("[data-close-image-modal='true']")
-      : null;
-    if (closeTarget) {
-      closeImageModal();
-    }
-  });
+  const backdrop = root.querySelector(".image-modal-backdrop");
+  const closeButton = root.querySelector(".image-modal-close");
+
+  if (backdrop instanceof HTMLElement) {
+    backdrop.addEventListener("click", closeImageModal);
+  }
+  if (closeButton instanceof HTMLElement) {
+    closeButton.addEventListener("click", closeImageModal);
+  }
 
   document.addEventListener("keydown", handleImageModalEscape);
   document.body.append(root);
