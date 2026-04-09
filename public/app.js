@@ -186,17 +186,22 @@ function renderCurrentChat() {
   if (!dom.chatMessages) {
     return;
   }
+  const keepBottom = shouldAutoScroll(dom.chatMessages) || dom.chatMessages.childElementCount === 0;
   const chat = getCurrentChat();
   dom.chatMessages.innerHTML = "";
   for (const entry of chat) {
-    renderMessage(entry.author, entry.text);
+    renderMessage(entry.author, entry.text, false);
+  }
+  if (keepBottom) {
+    scrollChatToBottom();
   }
 }
 
-function renderMessage(author, text) {
+function renderMessage(author, text, autoScroll = true) {
   if (!dom.chatMessages) {
     return;
   }
+  const keepBottom = autoScroll ? shouldAutoScroll(dom.chatMessages) : false;
   const article = document.createElement("article");
   article.className = `message ${author}`;
 
@@ -213,8 +218,8 @@ function renderMessage(author, text) {
 
   article.append(heading, body);
   dom.chatMessages.append(article);
-  if (shouldAutoScroll(dom.chatMessages)) {
-    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+  if (autoScroll && keepBottom) {
+    scrollChatToBottom();
   }
 }
 
@@ -253,11 +258,14 @@ async function handleQuestionSubmit(event) {
     return;
   }
 
+  const viewportState = captureQuestionViewport();
   setAiBusy(true);
   const chat = getCurrentChat();
   chat.push({ author: "user", text: question });
   saveCurrentChat(chat);
   renderCurrentChat();
+  scrollChatToBottom();
+  restoreQuestionViewport(viewportState);
   dom.questionInput.value = "";
 
   try {
@@ -274,12 +282,16 @@ async function handleQuestionSubmit(event) {
 
   saveCurrentChat(chat);
   renderCurrentChat();
+  scrollChatToBottom();
+  restoreQuestionViewport(viewportState);
   setAiBusy(false);
+  focusQuestionInput();
 }
 
 function clearCurrentChat() {
   saveCurrentChat([{ author: "ai", text: subjectMeta[currentSubject].greeting }]);
   renderCurrentChat();
+  scrollChatToBottom();
 }
 
 async function checkServerHealth() {
@@ -603,12 +615,58 @@ function setAiBusy(isBusy) {
   }
 }
 
+function captureQuestionViewport() {
+  if (!dom.questionInput) {
+    return null;
+  }
+
+  return {
+    pageY: window.scrollY,
+    inputTop: dom.questionInput.getBoundingClientRect().top,
+    selectionStart: dom.questionInput.selectionStart,
+    selectionEnd: dom.questionInput.selectionEnd,
+  };
+}
+
+function restoreQuestionViewport(state) {
+  if (!state || !dom.questionInput) {
+    return;
+  }
+
+  const nextTop = dom.questionInput.getBoundingClientRect().top;
+  const delta = nextTop - state.inputTop;
+  if (delta !== 0) {
+    window.scrollTo({
+      top: Math.max(0, state.pageY + delta),
+      behavior: "auto",
+    });
+  }
+}
+
+function focusQuestionInput() {
+  if (!dom.questionInput) {
+    return;
+  }
+
+  dom.questionInput.focus({ preventScroll: true });
+  const end = dom.questionInput.value.length;
+  dom.questionInput.setSelectionRange(end, end);
+}
+
+function scrollChatToBottom() {
+  if (!dom.chatMessages) {
+    return;
+  }
+  dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+}
+
 async function revealAiAnswer(answer, chat) {
   const cleanedAnswer = formatDisplayText(answer);
   const aiMessage = { author: "ai", text: "" };
   chat.push(aiMessage);
   saveCurrentChat(chat);
   renderCurrentChat();
+  scrollChatToBottom();
 
   const aiBodies = dom.chatMessages.querySelectorAll(".message.ai .message-body");
   const target = aiBodies[aiBodies.length - 1];
